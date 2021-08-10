@@ -1,10 +1,23 @@
 import { GetStaticProps } from "next"
-import Head from "next/head"
+import Head from "next/head"    
+import Link from 'next/link'
 import { getPrismicClient } from "../../services/prismic"
 import Prismic from '@prismicio/client'
 import style from './style.module.scss'
+import { RichText } from 'prismic-dom'
 
-export default function Posts(){
+interface Post {
+    slug: string,
+    title: string,
+    excerpt: string,
+    updatedAt: string,
+}
+
+interface PostsProps {
+    posts: Post[]
+}
+
+export default function Posts({ posts }: PostsProps){
     return(
         <>
             <Head>
@@ -13,21 +26,15 @@ export default function Posts(){
 
             <main className={style.container}>
                 <div className={style.posts}>
-                    <a href="#">
-                        <time>12 de março de 2021</time>
-                        <strong>Creating Monorepo with Lerna & Yarn Workspaces</strong>
-                        <p>In this guide, you will learn how to create a Monorepo to menage multiple packages with shared abuble</p>
-                    </a>
-                    <a href="#">
-                        <time>12 de março de 2021</time>
-                        <strong>Creating Monorepo with Lerna & Yarn Workspaces</strong>
-                        <p>In this guide, you will learn how to create a Monorepo to menage multiple packages with shared abuble</p>
-                    </a>
-                    <a href="#">
-                        <time>12 de março de 2021</time>
-                        <strong>Creating Monorepo with Lerna & Yarn Workspaces</strong>
-                        <p>In this guide, you will learn how to create a Monorepo to menage multiple packages with shared abuble</p>
-                    </a>
+                    {posts.map(post => (
+                        <Link href={`/posts/${post.slug}`}>
+                            <a key={post.slug} >
+                                <time>{post.updatedAt}</time>
+                                <strong>{post.title}</strong>
+                                <p>{post.excerpt} [...]</p>
+                            </a>
+                        </Link>
+                    ))}
                 </div>
             </main>
         </>
@@ -44,11 +51,22 @@ export const getStaticProps: GetStaticProps = async () => {
         pageSize: 100,
     })
 
-    console.log(response)
+    const posts = response.results.map(post => {
+        return {
+            slug: post.uid,
+            title: RichText.asText(post.data.title),
+            excerpt: post.data.content.find(content => content.type === "paragraph")?.text ?? '',
+            updatedAt: new Date(post.last_publication_date).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            })
+        }
+    })
 
     return {
         props: {
-
+            posts
         }
     }
 }
