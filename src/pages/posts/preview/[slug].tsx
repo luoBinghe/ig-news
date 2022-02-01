@@ -25,7 +25,7 @@ export default function Preview({ post }: PreviewProps){
         if(session?.activeSubscription){
             router.push(`/posts/${post.slug}`)
         }
-    }, [session])
+    }, [session, post.slug, router])
 
     return(
         <>
